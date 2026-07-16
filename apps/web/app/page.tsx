@@ -14,6 +14,8 @@ export default function Home() {
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState<string[]>([]);
   const [snapshot, setSnapshot] = useState<PilotPublicSnapshot>(demoSnapshot);
+  const [saving, setSaving] = useState(false);
+  const [decisionError, setDecisionError] = useState("");
 
   useEffect(() => {
     const controller = new AbortController();
@@ -36,6 +38,15 @@ export default function Home() {
     if (!message.trim()) return;
     setMessages((items) => [...items, message.trim()]);
     setMessage("");
+  };
+  const decide = async (nextState: Exclude<ReviewState, "review">) => {
+    setSaving(true); setDecisionError("");
+    try {
+      const response = await fetch("/api/reviews/version-cluster-003/decision", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: nextState === "accepted" ? "merge_versions" : "keep_separate", idempotencyKey: crypto.randomUUID() }) });
+      if (!response.ok) throw new Error("save decision");
+      setState(nextState);
+    } catch { setDecisionError("Не удалось сохранить решение. Попробуйте ещё раз."); }
+    finally { setSaving(false); }
   };
 
   return (
@@ -72,7 +83,9 @@ export default function Home() {
               <article><div className="fileTop"><span className="pdf">P</span><div><strong>Счёт №32 от 05.05.2026</strong><small>PDF · версия для отправки</small></div><b>С ПЕЧАТЬЮ</b></div><dl><div><dt>Сумма</dt><dd>590 000 ₸</dd></div><div><dt>Контрагент</dt><dd>Freedom Life</dd></div><div><dt>Изменён</dt><dd>05 мая, 14:41</dd></div></dl><button className="source">↗ Открыть источник</button></article>
             </div>
             <div className="reason"><span>✦</span><p><strong>Почему мы так думаем</strong>Совпадают номер, дата, сумма и контрагент. PDF создан через 9 минут после Excel и содержит печать.</p></div>
-            <div className="actions"><button onClick={() => setState("separate")} className={state === "separate" ? "selected" : ""}>Это разные документы</button><button onClick={() => setState("accepted")} className="primary">✓ Да, объединить как версии</button></div>
+            {decisionError && <p className="decisionError" role="alert">{decisionError}</p>}
+            {state !== "review" && <div className="savedDecision" role="status">✓ Решение сохранено в журнале: {state === "accepted" ? "объединить как версии" : "оставить разными документами"}</div>}
+            <div className="actions"><button disabled={saving} onClick={() => decide("separate")} className={state === "separate" ? "selected" : ""}>Это разные документы</button><button disabled={saving} onClick={() => decide("accepted")} className="primary">{saving ? "Сохраняем…" : "✓ Да, объединить как версии"}</button></div>
           </section>
           <div className="importBar"><div><strong>{snapshot.summary.ready} записей готовы к импорту</strong><small>Неподтверждённые данные останутся задачами и не попадут в документы.</small></div><button className="primary">Импортировать подтверждённое →</button></div>
         </div>
