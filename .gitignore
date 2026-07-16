@@ -13,10 +13,10 @@ data/processed/**
 *.log
 node_modules/
 .next/
+.next/cache/
 dist/
 build/
 __pycache__/
 .pytest_cache/
 .DS_Store
 ~$*
-
