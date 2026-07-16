@@ -29,6 +29,17 @@
 - Файлы: S3-совместимое зашифрованное хранилище.
 - Развёртывание пилота: Docker Compose.
 
+## Целевое развёртывание Cloudflare
+
+- Web и серверные маршруты Next.js: Cloudflare Workers через OpenNext adapter.
+- Закрытые оригиналы и сформированные документы: приватный bucket Cloudflare R2, без публичных URL.
+- Решения, audit log и прикладные записи пилота: Cloudflare D1 либо внешний PostgreSQL после нагрузочного теста; локальная файловая реализация используется только в разработке.
+- Секреты: Workers Secrets, никогда не `NEXT_PUBLIC_*` и не Git.
+- Фоновые проверки сроков: Cron Triggers/Queues после реализации календаря обязательств.
+- Preview должен запускаться в `workerd`, потому что обычный `next dev` не воспроизводит runtime Workers.
+
+Текущие API используют `node:fs` и `data/working`; перед первым Cloudflare preview этот слой обязательно заменяется storage adapter. Бухгалтерские файлы нельзя упаковывать в Worker bundle или Static Assets.
+
 ## Ключевая модель
 
 `company → counterparty → contract → order → invoice → payment → fulfillment → closing_document → esf_obligation`
