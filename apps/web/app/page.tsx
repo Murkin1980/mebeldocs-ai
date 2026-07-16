@@ -1,26 +1,37 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { demoSnapshot, type PilotPublicSnapshot } from "../lib/pilot";
 
 type ReviewState = "review" | "accepted" | "separate";
 
 const nav = ["Сегодня", "Создать", "Заказы", "Документы", "Контрагенты", "Календарь"];
 const steps = ["Загрузка", "Проверка", "Извлечение", "Подтверждение"];
-const groups = [
-  { label: "Готово к импорту", value: 249, tone: "green", note: "19 контрагентов · 230 позиций" },
-  { label: "Нужно подтвердить", value: 14, tone: "amber", note: "Версии и совпадения" },
-  { label: "Возможные ошибки", value: 5, tone: "red", note: "Даты, номера, связи" },
-  { label: "Не удалось прочитать", value: 3, tone: "slate", note: "Нужен оригинал или OCR" },
-];
-
 export default function Home() {
   const [activeNav, setActiveNav] = useState("Документы");
   const [state, setState] = useState<ReviewState>("review");
   const [chatOpen, setChatOpen] = useState(true);
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState<string[]>([]);
+  const [snapshot, setSnapshot] = useState<PilotPublicSnapshot>(demoSnapshot);
 
-  const remaining = useMemo(() => (state === "review" ? 14 : 13), [state]);
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch("/api/pilot", { signal: controller.signal, cache: "no-store" })
+      .then((response) => response.ok ? response.json() : Promise.reject(new Error("pilot API")))
+      .then((data: PilotPublicSnapshot) => setSnapshot(data))
+      .catch(() => undefined);
+    return () => controller.abort();
+  }, []);
+
+  const groups = [
+    { label: "Готово к импорту", value: snapshot.summary.ready, tone: "green", note: `${snapshot.counts.counterparties} контрагентов · ${snapshot.counts.nomenclatureCandidates} позиций` },
+    { label: "Нужно подтвердить", value: snapshot.summary.review, tone: "amber", note: "Версии и совпадения" },
+    { label: "Возможные ошибки", value: snapshot.summary.errors, tone: "red", note: "Профиль и связи платежей" },
+    { label: "Не удалось прочитать", value: snapshot.summary.unreadable, tone: "slate", note: "Нужен оригинал или OCR" },
+  ];
+
+  const remaining = useMemo(() => Math.max(0, snapshot.summary.review - (state === "review" ? 0 : 1)), [state, snapshot.summary.review]);
   const send = () => {
     if (!message.trim()) return;
     setMessages((items) => [...items, message.trim()]);
@@ -48,6 +59,11 @@ export default function Home() {
           <div className="stepper">{steps.map((step, i) => <div className="step" key={step}><span className={i < 3 ? "done" : "current"}>{i < 3 ? "✓" : "4"}</span><b>{step}</b>{i < 3 && <small>Готово</small>}{i < steps.length - 1 && <hr />}</div>)}</div>
           <div className="stats">{groups.map((g) => <article key={g.label} className={`stat ${g.tone}`}><div><span>{g.label}</span><strong>{g.value}</strong></div><small>{g.note}</small></article>)}</div>
 
+          <section className="taskStrip" aria-label="Очередь проверки">
+            <div><p className="eyebrow">ОЧЕРЕДЬ ПРОВЕРКИ</p><strong>{snapshot.sourceMode === "pilot" ? "Локальный пилотный снимок" : "Демонстрационные данные"}</strong></div>
+            <div className="taskItems">{snapshot.reviewTasks.map((task) => <button key={task.id} className={task.severity}><span>{task.title}<small>{task.detail}</small></span><b>{task.count}</b></button>)}</div>
+          </section>
+
           <section className="reviewCard">
             <div className="reviewHead"><div><span className="docIcon">▤</span><div><p className="eyebrow amberText">НУЖНО ПОДТВЕРДИТЬ · {remaining} ОСТАЛОСЬ</p><h2>Это версии одного документа?</h2></div></div><span className="confidence">Уверенность 86%</span></div>
             <div className="compare">
@@ -58,7 +74,7 @@ export default function Home() {
             <div className="reason"><span>✦</span><p><strong>Почему мы так думаем</strong>Совпадают номер, дата, сумма и контрагент. PDF создан через 9 минут после Excel и содержит печать.</p></div>
             <div className="actions"><button onClick={() => setState("separate")} className={state === "separate" ? "selected" : ""}>Это разные документы</button><button onClick={() => setState("accepted")} className="primary">✓ Да, объединить как версии</button></div>
           </section>
-          <div className="importBar"><div><strong>249 записей готовы к импорту</strong><small>Неподтверждённые данные останутся задачами и не попадут в документы.</small></div><button className="primary">Импортировать подтверждённое →</button></div>
+          <div className="importBar"><div><strong>{snapshot.summary.ready} записей готовы к импорту</strong><small>Неподтверждённые данные останутся задачами и не попадут в документы.</small></div><button className="primary">Импортировать подтверждённое →</button></div>
         </div>
       </section>
 
