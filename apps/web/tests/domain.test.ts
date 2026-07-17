@@ -606,3 +606,87 @@ function makeLine(
     ...overrides,
   };
 }
+
+// ──────────────────────────────────────────────
+// Extended entity types
+// ──────────────────────────────────────────────
+
+import type {
+  Payment,
+  PaymentStatus,
+  InvoiceBalance,
+  EsfReviewStatus,
+  AuditEntityType,
+} from "../lib/domain/entities.ts";
+
+test("Payment status transitions are independent (no state machine)", () => {
+  const draftPayment: Payment = {
+    id: "p1",
+    companyId: "c1",
+    date: "2026-05-01",
+    amountTiyn: 100000,
+    method: "bank_transfer",
+    status: "draft",
+    actorId: "u1",
+    createdAt: "2026-05-01T00:00:00Z",
+    updatedAt: "2026-05-01T00:00:00Z",
+  };
+  assert.equal(draftPayment.status, "draft");
+
+  const matchedPayment: Payment = { ...draftPayment, status: "matched" };
+  assert.equal(matchedPayment.status, "matched");
+
+  const reversedPayment: Payment = { ...draftPayment, status: "reversed" };
+  assert.equal(reversedPayment.status, "reversed");
+
+  const allStatuses: PaymentStatus[] = ["draft", "matched", "reversed"];
+  assert.equal(allStatuses.length, 3);
+  assert.ok(allStatuses.includes("draft"));
+  assert.ok(allStatuses.includes("matched"));
+  assert.ok(allStatuses.includes("reversed"));
+});
+
+test("InvoiceBalance: unpaid status from empty matches", () => {
+  const balance: InvoiceBalance = {
+    invoiceId: "inv-test",
+    invoiceTotalTiyn: 500000,
+    confirmedPaidTiyn: 0,
+    remainingTiyn: 500000,
+    status: "unpaid",
+  };
+  assert.equal(balance.status, "unpaid");
+  assert.equal(balance.confirmedPaidTiyn, 0);
+  assert.equal(balance.remainingTiyn, balance.invoiceTotalTiyn);
+});
+
+test("InvoiceBalance: all four statuses exist as string literals", () => {
+  const unpaid: InvoiceBalance["status"] = "unpaid";
+  const partiallyPaid: InvoiceBalance["status"] = "partially_paid";
+  const paid: InvoiceBalance["status"] = "paid";
+  const overpaid: InvoiceBalance["status"] = "overpaid";
+  assert.equal(unpaid, "unpaid");
+  assert.equal(partiallyPaid, "partially_paid");
+  assert.equal(paid, "paid");
+  assert.equal(overpaid, "overpaid");
+});
+
+test("EsfReviewStatus: all four statuses exist", () => {
+  const imported: EsfReviewStatus = "imported";
+  const baseline: EsfReviewStatus = "baseline_confirmed";
+  const verified: EsfReviewStatus = "final_verified";
+  const mismatch: EsfReviewStatus = "final_mismatch";
+  assert.equal(imported, "imported");
+  assert.equal(baseline, "baseline_confirmed");
+  assert.equal(verified, "final_verified");
+  assert.equal(mismatch, "final_mismatch");
+});
+
+test("AuditEntityType includes payment", () => {
+  const entityType: AuditEntityType = "payment";
+  assert.equal(entityType, "payment");
+});
+
+test("AuditEntityType includes esf_review", () => {
+  const entityType: AuditEntityType = "esf_review";
+  assert.equal(entityType, "esf_review");
+});

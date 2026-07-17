@@ -1,7 +1,7 @@
 import { readFile, writeFile, mkdir, readdir } from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
-import type { CompanyProfile, Counterparty, Order, Invoice, AuditEvent } from "../domain/entities";
+import type { CompanyProfile, Counterparty, Order, Invoice, AuditEvent, Payment, PaymentMatchEvent, EsfReview } from "../domain/entities";
 import type {
   CompanyRepository,
   CounterpartyRepository,
@@ -9,6 +9,9 @@ import type {
   InvoiceRepository,
   AuditEventRepository,
   PdfStorage,
+  PaymentRepository,
+  PaymentMatchEventRepository,
+  EsfReviewRepository,
 } from "../domain/repository";
 
 function dataDir(): string {
@@ -233,5 +236,142 @@ export class LocalPdfStorage implements PdfStorage {
     } catch {
       return null;
     }
+  }
+}
+
+// ─── Payment ───────────────────────────────────────────────────────
+
+function paymentsDir(): string {
+  return path.join(dataDir(), "payments");
+}
+
+export class LocalPaymentRepository implements PaymentRepository {
+  async list(companyId: string): Promise<Payment[]> {
+    const dir = paymentsDir();
+    try {
+      const files = await readdir(dir);
+      const items: Payment[] = [];
+      for (const file of files.filter((f) => f.endsWith(".json"))) {
+        const item = await readJsonFile<Payment>(path.join(dir, file));
+        if (item && item.companyId === companyId) items.push(item);
+      }
+      return items.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    } catch {
+      return [];
+    }
+  }
+
+  async get(id: string): Promise<Payment | null> {
+    return readJsonFile<Payment>(path.join(paymentsDir(), `${id}.json`));
+  }
+
+  async create(payment: Payment): Promise<Payment> {
+    await writeJsonFile(path.join(paymentsDir(), `${payment.id}.json`), payment);
+    return payment;
+  }
+
+  async update(id: string, data: Partial<Payment>): Promise<Payment> {
+    const existing = await this.get(id);
+    if (!existing) throw new Error(`Payment ${id} not found`);
+    const updated = { ...existing, ...data, id, updatedAt: new Date().toISOString() };
+    await writeJsonFile(path.join(paymentsDir(), `${id}.json`), updated);
+    return updated;
+  }
+}
+
+// ─── Payment Match Events ──────────────────────────────────────────
+
+function paymentMatchEventsDir(): string {
+  return path.join(dataDir(), "payment-match-events");
+}
+
+export class LocalPaymentMatchEventRepository implements PaymentMatchEventRepository {
+  async listForPayment(paymentId: string): Promise<PaymentMatchEvent[]> {
+    const dir = paymentMatchEventsDir();
+    try {
+      const files = await readdir(dir);
+      const events: PaymentMatchEvent[] = [];
+      for (const file of files.filter((f) => f.endsWith(".json"))) {
+        const event = await readJsonFile<PaymentMatchEvent>(path.join(dir, file));
+        if (event && event.paymentId === paymentId) events.push(event);
+      }
+      return events.sort((a, b) => a.matchedAt.localeCompare(b.matchedAt));
+    } catch {
+      return [];
+    }
+  }
+
+  async listForInvoice(invoiceId: string): Promise<PaymentMatchEvent[]> {
+    const dir = paymentMatchEventsDir();
+    try {
+      const files = await readdir(dir);
+      const events: PaymentMatchEvent[] = [];
+      for (const file of files.filter((f) => f.endsWith(".json"))) {
+        const event = await readJsonFile<PaymentMatchEvent>(path.join(dir, file));
+        if (event && event.invoiceId === invoiceId) events.push(event);
+      }
+      return events.sort((a, b) => a.matchedAt.localeCompare(b.matchedAt));
+    } catch {
+      return [];
+    }
+  }
+
+  async create(event: PaymentMatchEvent): Promise<PaymentMatchEvent> {
+    await writeJsonFile(path.join(paymentMatchEventsDir(), `${event.id}.json`), event);
+    return event;
+  }
+
+  async findByIdempotencyKey(key: string): Promise<PaymentMatchEvent | null> {
+    const dir = paymentMatchEventsDir();
+    try {
+      const files = await readdir(dir);
+      for (const file of files.filter((f) => f.endsWith(".json"))) {
+        const event = await readJsonFile<PaymentMatchEvent>(path.join(dir, file));
+        if (event && event.idempotencyKey === key) return event;
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  }
+}
+
+// ─── ESF Review ────────────────────────────────────────────────────
+
+function esfReviewsDir(): string {
+  return path.join(dataDir(), "esf-reviews");
+}
+
+export class LocalEsfReviewRepository implements EsfReviewRepository {
+  async list(companyId: string): Promise<EsfReview[]> {
+    const dir = esfReviewsDir();
+    try {
+      const files = await readdir(dir);
+      const items: EsfReview[] = [];
+      for (const file of files.filter((f) => f.endsWith(".json"))) {
+        const item = await readJsonFile<EsfReview>(path.join(dir, file));
+        if (item && item.companyId === companyId) items.push(item);
+      }
+      return items.sort((a, b) => b.importedAt.localeCompare(a.importedAt));
+    } catch {
+      return [];
+    }
+  }
+
+  async get(id: string): Promise<EsfReview | null> {
+    return readJsonFile<EsfReview>(path.join(esfReviewsDir(), `${id}.json`));
+  }
+
+  async create(review: EsfReview): Promise<EsfReview> {
+    await writeJsonFile(path.join(esfReviewsDir(), `${review.id}.json`), review);
+    return review;
+  }
+
+  async update(id: string, data: Partial<EsfReview>): Promise<EsfReview> {
+    const existing = await this.get(id);
+    if (!existing) throw new Error(`EsfReview ${id} not found`);
+    const updated = { ...existing, ...data, id };
+    await writeJsonFile(path.join(esfReviewsDir(), `${id}.json`), updated);
+    return updated;
   }
 }

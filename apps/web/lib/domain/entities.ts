@@ -88,7 +88,7 @@ export type Invoice = {
   confirmedBy?: string;
 };
 
-export type AuditEntityType = "company_profile" | "counterparty" | "order" | "invoice";
+export type AuditEntityType = "company_profile" | "counterparty" | "order" | "invoice" | "payment" | "esf_review";
 
 export type AuditAction =
   | "created"
@@ -96,7 +96,13 @@ export type AuditAction =
   | "confirmed"
   | "cancelled"
   | "pdf_generated"
-  | "invoice_created_from_order";
+  | "invoice_created_from_order"
+  | "payment_created"
+  | "payment_matched"
+  | "payment_reversed"
+  | "esf_imported"
+  | "esf_baseline_confirmed"
+  | "esf_final_verified";
 
 export type AuditEvent = {
   id: string;
@@ -110,4 +116,99 @@ export type AuditEvent = {
   nextState?: Record<string, unknown>;
   reason?: string;
   metadata?: Record<string, unknown>;
+};
+
+// ─── Payments ──────────────────────────────────────────────────────
+
+export type PaymentMethod = "cash" | "bank_transfer" | "card";
+
+export type PaymentStatus = "draft" | "matched" | "reversed";
+
+export type Payment = {
+  id: string;
+  companyId: string;
+  date: string; // YYYY-MM-DD
+  amountTiyn: number;
+  method: PaymentMethod;
+  counterpartyId?: string;
+  invoiceId?: string; // confirmed link
+  invoiceReference?: string; // display/imported text reference
+  notes?: string;
+  status: PaymentStatus;
+  actorId: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type PaymentMatchEvent = {
+  id: string;
+  paymentId: string;
+  invoiceId: string;
+  amountTiyn: number;
+  matchedBy: string;
+  matchedAt: string;
+  idempotencyKey: string;
+  reversed?: boolean;
+  reversedAt?: string;
+  reversedBy?: string;
+};
+
+export type InvoiceBalance = {
+  invoiceId: string;
+  invoiceTotalTiyn: number;
+  confirmedPaidTiyn: number;
+  remainingTiyn: number;
+  status: "unpaid" | "partially_paid" | "paid" | "overpaid";
+};
+
+// ─── ESF Review ────────────────────────────────────────────────────
+
+export type EsfFieldStatus = "match" | "warning" | "error" | "not_checked";
+
+export type EsfFieldComparison = {
+  fieldName: string;
+  expectedValue: string;
+  actualValue: string;
+  status: EsfFieldStatus;
+  explanation: string;
+  expectedSource: string;
+};
+
+export type EsfReviewStatus = "imported" | "baseline_confirmed" | "final_verified" | "final_mismatch";
+
+export type EsfReview = {
+  id: string;
+  companyId: string;
+  status: EsfReviewStatus;
+  // Initial import
+  importedXmlFilename: string;
+  importedAt: string;
+  importedBy: string;
+  importedEsfData: EsfExtractedData;
+  // Baseline (user-confirmed expected values)
+  baseline?: EsfExtractedData;
+  baselineConfirmedAt?: string;
+  baselineConfirmedBy?: string;
+  // Final verification
+  finalXmlFilename?: string;
+  finalVerifiedAt?: string;
+  comparisonFields?: EsfFieldComparison[];
+  verificationResult?: "passed" | "warnings" | "errors";
+  // Link
+  orderId?: string;
+  invoiceId?: string;
+};
+
+export type EsfExtractedData = {
+  esfNumber: string;
+  registrationNumber?: string;
+  status: string;
+  issueDate: string;
+  turnoverDate: string;
+  sellerName: string;
+  sellerBinIin: string;
+  buyerName: string;
+  buyerBinIin: string;
+  totalAmountTiyn: number;
+  formatVersion?: string;
 };

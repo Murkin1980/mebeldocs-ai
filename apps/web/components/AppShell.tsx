@@ -1,13 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { type ReactNode } from "react";
+import { type ReactNode, useState, useCallback } from "react";
 
 const nav = [
   { label: "Сегодня", href: "/" },
   { label: "Создать", href: "/orders/new" },
   { label: "Заказы", href: "/orders" },
   { label: "Документы", href: "/documents" },
+  { label: "Платежи", href: "/payments" },
+  { label: "ЭСФ", href: "/esf/import" },
   { label: "Контрагенты", href: "/counterparties" },
   { label: "Календарь", href: "/calendar" },
 ];
@@ -18,9 +20,21 @@ interface AppShellProps {
 }
 
 export default function AppShell({ children, activePage }: AppShellProps) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const closeMenu = useCallback(() => setMenuOpen(false), []);
+
   return (
     <main className="shell">
-      <aside className="sidebar">
+      {menuOpen && <div className="sidebarOverlay open" onClick={closeMenu} role="presentation" />}
+      <aside className={`sidebar${menuOpen ? " open" : ""}`} aria-label="Навигация">
+        <button
+          className="mobileMenuBtn"
+          onClick={closeMenu}
+          aria-label="Закрыть меню"
+          style={{ display: "none" }}
+        >
+          ✕
+        </button>
         <div className="brand">
           <span className="brandMark">M</span>
           <span>
@@ -41,6 +55,7 @@ export default function AppShell({ children, activePage }: AppShellProps) {
               key={item.label}
               href={item.href}
               className={activePage === item.label ? "active" : ""}
+              onClick={closeMenu}
             >
               <span className="navDot" />
               {item.label}
@@ -65,6 +80,13 @@ export default function AppShell({ children, activePage }: AppShellProps) {
 
       <section className="workspace">
         <header className="topbar">
+          <button
+            className="mobileMenuBtn"
+            onClick={() => setMenuOpen(true)}
+            aria-label="Открыть меню навигации"
+          >
+            ☰
+          </button>
           <div>
             <span className="sandboxDot" /> ПЕСОЧНИЦА{" "}
             <em>Ничего не отправляется</em>
