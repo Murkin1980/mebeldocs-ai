@@ -107,3 +107,51 @@
 - Документы планируется хранить в приватном R2; прикладные данные и audit log — в D1 либо PostgreSQL после проверки.
 - До preview необходимо убрать runtime-зависимость от `node:fs` и локального `data/working`.
 - Добавлен отдельный deployment gate с secrets, backup/restore, preview в `workerd`, логами и rollback.
+
+## 2026-07-17 — Этап 2: Первый Vertical Slice
+
+Результат: полный цикл от профиля компании до PDF-счёта с append-only audit log.
+
+### Доменный слой
+- `lib/domain/money.ts` — тип Money с целочисленными тийнами, арифметика без потери точности
+- `lib/domain/entities.ts` — CompanyProfile, Counterparty, Order, OrderLine, Invoice, AuditEvent
+- `lib/domain/state-machine.ts` — состояния draft→confirmed→posted, draft→cancelled для Order и Invoice
+- `lib/domain/calculations.ts` — расчёт итогов строк и заказов
+- `lib/domain/validation.ts` — валидация БИН/ИИН, обязательных полей
+- `lib/domain/repository.ts` — интерфейсы репозиториев
+
+### Хранилище
+- `lib/storage/local-repositories.ts` — все репозитории на node:fs, данные в `data/working/docs/`
+- Абстракция repository interfaces подготавливает миграцию на Cloudflare D1/R2
+
+### Сервисы и API
+- `lib/application/` — company-profile, counterparty-service, order-service, invoice-service
+- `lib/services.ts` — service locator для DI
+- API routes: company-profile, counterparties, orders (CRUD + confirm + создание инвойса), invoices (get + confirm + PDF), audit-events
+- PDF генерация: `lib/pdf-generator.ts` — pdf-lib, A4 формат, таблица товаров, итоги
+
+### Интерфейс
+- `components/AppShell.tsx` — sidebar layout с навигацией
+- UI: `/orders` (список), `/orders/new` (создание), `/orders/[id]` (детали), `/invoices/[id]` (проверка/подтверждение), `/audit` (история)
+
+### Тесты — 103 теста, все проходят
+- `tests/domain.test.ts` — 89 unit-тестов (money 24, state machine 22, calculations 10, validation 33)
+- `tests/integration.test.ts` — 6 интеграционных (full CRUD + order→invoice flow + idempotency)
+- `tests/pdf.test.ts` — 3 теста генерации PDF (валидность, структура, сохранение)
+
+### Исправления
+- `tsc --noEmit` вместо `next lint` (Next.js 16 удалил встроенный lint)
+- PDF: StandardFonts Helvetica вместо custom DejaVu Sans (файлы повреждены при скачивании) — кириллица не отображается, TODO
+- Исправлены все import paths после реорганизации файлов
+
+### Известные ограничения
+- PDF кириллица: Helvetica не поддерживает кириллицу. Нужно скачать DejaVu Sans TTF и подключить через fontkit
+- `@pdf-lib/fontkit` установлен но не используется (нет валидных TTF файлов)
+- Нет экрана редактирования профиля компании
+- Нет экрана списка контрагентов
+
+### Следующий шаг
+- Внедрить DejaVu Sans TTF для PDF кириллицы
+- Добавить экран редактирования профиля компании
+- Добавить экран списка контрагентов
+- Обновить ROADMAP.md

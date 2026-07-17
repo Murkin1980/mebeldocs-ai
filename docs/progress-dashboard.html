@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MebelDocs AI — Progress Dashboard</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0f172a; color: #e2e8f0; padding: 2rem; }
+    h1 { font-size: 1.8rem; margin-bottom: 0.5rem; color: #38bdf8; }
+    .subtitle { color: #94a3b8; margin-bottom: 2rem; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+    .card { background: #1e293b; border-radius: 12px; padding: 1.5rem; border: 1px solid #334155; }
+    .card .label { color: #94a3b8; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    .card .value { font-size: 2rem; font-weight: 700; color: #38bdf8; margin-top: 0.25rem; }
+    .card .value.green { color: #4ade80; }
+    .card .value.amber { color: #fbbf24; }
+    .card .value.red { color: #f87171; }
+    .phase { background: #1e293b; border-radius: 12px; padding: 1.5rem; border: 1px solid #334155; margin-bottom: 1rem; }
+    .phase h3 { font-size: 1.1rem; margin-bottom: 0.75rem; }
+    .phase .done { color: #4ade80; }
+    .phase .partial { color: #fbbf24; }
+    .phase .todo { color: #64748b; }
+    .bar-bg { background: #334155; border-radius: 6px; height: 8px; margin-top: 0.5rem; }
+    .bar-fill { height: 8px; border-radius: 6px; background: linear-gradient(90deg, #38bdf8, #4ade80); }
+    ul { list-style: none; padding-left: 0; }
+    ul li { padding: 0.3rem 0; font-size: 0.9rem; }
+    ul li::before { content: '✓ '; color: #4ade80; }
+    ul li.pending::before { content: '○ '; color: #64748b; }
+    .updated { color: #64748b; font-size: 0.8rem; margin-top: 2rem; text-align: center; }
+  </style>
+</head>
+<body>
+  <h1>MebelDocs AI</h1>
+  <p class="subtitle">Progress Dashboard — Этап 2: Первый Vertical Slice</p>
+
+  <div class="grid">
+    <div class="card">
+      <div class="label">Тесты</div>
+      <div class="value green">103/103</div>
+    </div>
+    <div class="card">
+      <div class="label">TypeScript</div>
+      <div class="value green">0 ошибок</div>
+    </div>
+    <div class="card">
+      <div class="label">Build</div>
+      <div class="value green">19 routes</div>
+    </div>
+    <div class="card">
+      <div class="label">API Routes</div>
+      <div class="value">14</div>
+    </div>
+    <div class="card">
+      <div class="label">UI Pages</div>
+      <div class="value">6</div>
+    </div>
+    <div class="card">
+      <div class="label">Этап</div>
+      <div class="value amber">2/6</div>
+    </div>
+  </div>
+
+  <div class="phase">
+    <h3>Этап 0 — Основание проекта <span class="done">✓ завершён</span></h3>
+    <div class="bar-bg"><div class="bar-fill" style="width: 100%"></div></div>
+    <ul>
+      <li>Название, структура, данные в закрытом каталоге</li>
+      <li>Дорожная карта, чек-листы, документы</li>
+    </ul>
+  </div>
+
+  <div class="phase">
+    <h3>Этап 1 — Инвентаризация <span class="done">✓ завершён</span></h3>
+    <div class="bar-bg"><div class="bar-fill" style="width: 100%"></div></div>
+    <ul>
+      <li>210 файлов проинвентаризированы, дубли найдены</li>
+      <li>Контрагенты, номенклатура, ЭСФ, платежи</li>
+      <li>Локальный пилотный снимок собран</li>
+    </ul>
+  </div>
+
+  <div class="phase">
+    <h3>Этап 2 — Документооборот <span class="partial">~ в процессе</span></h3>
+    <div class="bar-bg"><div class="bar-fill" style="width: 65%"></div></div>
+    <ul>
+      <li>Профиль компании (API CRUD)</li>
+      <li>Заказы с позициями (API CRUD + confirm)</li>
+      <li>Инвойсы (create from order + confirm + PDF)</li>
+      <li>State machine (draft→confirmed→posted/cancelled)</li>
+      <li>Append-only audit log</li>
+      <li>103 теста — все проходят</li>
+      <li class="pending">Генерация З-2 и Р-1</li>
+      <li class="pending">PDF кириллица (DejaVu Sans)</li>
+      <li class="pending">UI редактирования профиля</li>
+      <li class="pending">UI списка контрагентов</li>
+    </ul>
+  </div>
+
+  <div class="phase">
+    <h3>Этап 3 — AI-приёмщик <span class="todo">○ не начат</span></h3>
+    <div class="bar-bg"><div class="bar-fill" style="width: 15%"></div></div>
+    <ul>
+      <li class="pending">Структурированное извлечение команд</li>
+      <li class="pending">Оценка уверенности</li>
+      <li class="pending">Голосовой ввод</li>
+      <li class="pending">База знаний с цитированием</li>
+    </ul>
+  </div>
+
+  <div class="phase">
+    <h3>Этап 4 — Календарь обязательств <span class="todo">○ не начат</span></h3>
+    <div class="bar-bg"><div class="bar-fill" style="width: 0%"></div></div>
+  </div>
+
+  <div class="phase">
+    <h3>Этап 5 — SaaS-готовность <span class="todo">○ не начат</span></h3>
+    <div class="bar-bg"><div class="bar-fill" style="width: 10%"></div></div>
+  </div>
+
+  <div class="phase">
+    <h3>Этап 5.5 — Cloudflare Deployment <span class="todo">○ не начат</span></h3>
+    <div class="bar-bg"><div class="bar-fill" style="width: 10%"></div></div>
+  </div>
+
+  <p class="updated">Обновлено: 2026-07-17</p>
+</body>
+</html>
