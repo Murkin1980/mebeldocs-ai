@@ -24,6 +24,7 @@
 - `AGENTS.md` — правила для AI-кодеров.
 - `SESSION_NOTES.md` — журнал рабочих сессий.
 - `docs/STITCH_EXPERIMENT_GUIDE.md` — готовый сценарий эксперимента с интерфейсом в Google Stitch.
+- `docs/STITCH_NEXT_SCREENS.md` — очередь и готовые промпты следующих экранов Google Stitch.
 - `design/stitch/` — изолированное хранилище исходников, экранов и code export из Google Stitch.
 
 ## Ближайший результат
