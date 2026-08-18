@@ -11,6 +11,7 @@ const nav = [
   { label: "Платежи", href: "/payments" },
   { label: "ЭСФ", href: "/esf/import" },
   { label: "Контрагенты", href: "/counterparties" },
+  { label: "Компания", href: "/company-profile" },
   { label: "Календарь", href: "/calendar" },
 ];
 

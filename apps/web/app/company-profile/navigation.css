@@ -1,0 +1,17 @@
+.sidebar nav a {
+  border: 0;
+  background: transparent;
+  color: #a8bbb0;
+  text-align: left;
+  padding: 11px 12px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  text-decoration: none;
+}
+
+.sidebar nav a.active {
+  background: #2b503f;
+  color: #fff;
+}

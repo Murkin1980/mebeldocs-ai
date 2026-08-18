@@ -1,5 +1,19 @@
 # SESSION_NOTES
 
+## 2026-08-18 — UI профиля компании (EXP-12 P-003)
+
+- Добавлен экран `/company-profile` поверх существующего `GET/PUT /api/company-profile`.
+- Форма редактирует только разрешённые реквизиты; `id`, timestamps и `invoiceNumbering` не входят в payload.
+- Добавлены русские loading, empty, validation, error и saved states, а также адаптивная desktop/mobile компоновка.
+- Исправлено оформление ссылок навигации на новом маршруте и добавлен активный пункт «Компания».
+- Синтетический browser round-trip подтвердил сохранение и восстановление после reload; созданный тестовый профиль после проверки удалён.
+- Проверки: 202/202 теста, TypeScript, production build, desktop/mobile Playwright screenshots — PASS.
+- Внешняя отправка, реальные реквизиты, API/domain/storage и production deployment не изменялись.
+
+### Следующий шаг
+
+Кириллический PDF-шрифт вынести в отдельный VERIFIED этап с открытым font asset, тестом извлечения текста и визуальным рендером.
+
 ## 2026-07-16 — Инициализация
 
 - Выбрано рабочее название MebelDocs AI.
